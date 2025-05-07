@@ -23,11 +23,84 @@ To Implement ELLIPTIC CURVE CRYPTOGRAPHY(ECC)
 5. Security: ECC’s security relies on the Elliptic Curve Discrete Logarithm Problem (ECDLP), making it highly secure with shorter key lengths compared to traditional methods like RSA.
 
 ## Program:
+```
+# Define a class to represent points on the elliptic curve
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
+# Function to compute modular inverse using Extended Euclidean Algorithm
+def mod_inverse(a, m):
+    m0, x0, x1 = m, 0, 1
+    if m == 1:
+        return 0
+    while a > 1:
+        q = a // m
+        a, m = m, a % m
+        x0, x1 = x1 - q * x0, x0
+    return x1 + m0 if x1 < 0 else x1
 
+# Function to perform point addition on the elliptic curve
+def point_addition(P, Q, a, p):
+    if P.x == Q.x and P.y == Q.y:  # Point doubling
+        numerator = (3 * P.x * P.x + a) % p
+        denominator = mod_inverse(2 * P.y, p)
+    else:  # Point addition
+        numerator = (Q.y - P.y) % p
+        denominator = mod_inverse((Q.x - P.x) % p, p)
+    
+    lambd = (numerator * denominator) % p
+    x_r = (lambd * lambd - P.x - Q.x) % p
+    y_r = (lambd * (P.x - x_r) - P.y) % p
+    return Point(x_r, y_r)
 
+# Function for scalar multiplication (repeated point addition)
+def scalar_multiplication(P, k, a, p):
+    result = P
+    k -= 1  # because we already have P
+    while k > 0:
+        result = point_addition(result, P, a, p)
+        k -= 1
+    return result
+
+def main():
+    # Step 1: Get elliptic curve parameters
+    p = int(input("Enter the prime number (p): "))
+    a = int(input("Enter curve parameter a: "))
+    b = int(input("Enter curve parameter b: "))
+    x = int(input("Enter base point G.x: "))
+    y = int(input("Enter base point G.y: "))
+    G = Point(x, y)
+
+    # Step 2: Get private keys
+    privateA = int(input("Enter Alice's private key: "))
+    privateB = int(input("Enter Bob's private key: "))
+
+    # Step 3: Compute public keys
+    publicA = scalar_multiplication(G, privateA, a, p)
+    publicB = scalar_multiplication(G, privateB, a, p)
+
+    print(f"Alice's public key: ({publicA.x}, {publicA.y})")
+    print(f"Bob's public key: ({publicB.x}, {publicB.y})")
+
+    # Step 4: Compute shared secrets
+    sharedSecretA = scalar_multiplication(publicB, privateA, a, p)
+    sharedSecretB = scalar_multiplication(publicA, privateB, a, p)
+
+    print(f"Shared secret computed by Alice: ({sharedSecretA.x}, {sharedSecretA.y})")
+    print(f"Shared secret computed by Bob: ({sharedSecretB.x}, {sharedSecretB.y})")
+
+    if sharedSecretA.x == sharedSecretB.x and sharedSecretA.y == sharedSecretB.y:
+        print("Key exchange successful. Both shared secrets match!")
+    else:
+        print("Key exchange failed. Shared secrets do not match.")
+
+if __name__ == "__main__":
+    main()
+```
 ## Output:
-
+![image](https://github.com/user-attachments/assets/fe596272-66d2-4acc-9bf0-3491a7a26474)
 
 ## Result:
 The program is executed successfully
